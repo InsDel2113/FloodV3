@@ -13,9 +13,9 @@ namespace Flood
 		public Vector3 WaterBasePosition;
 		public float WaterHeight = 375f; // how high the water goes up to
 		public float WaterSpeed = 1f; // how fast the water rises up
+		public float WaterDamage = 20f; // How much damage does the water do?
 		[Net]
 		public List<Entity> HurtList { get; set; } = new List<Entity>();
-		public float WaterDamage = 20f; // How much damage does the water do?
 
 		// Run this each tick. Ticks down timers, checks round stuff, etc
 		public void Tick()
@@ -61,18 +61,24 @@ namespace Flood
 
 		public void SecondTick()
 		{
-			foreach ( var Player in HurtList )
+			if ( FloodGame.Instance.RoundSystem.CurrentRound == Round.Fight )
 			{
-				DamageInfo info = new DamageInfo();
-				info.Damage = WaterDamage;
-				Player.TakeDamage( info );
+				foreach ( var Player in HurtList )
+				{
+					DamageInfo info = new DamageInfo();
+					info.Damage = WaterDamage;
+					Player.TakeDamage( info );
+				}
+			} else
+			{
+				HurtList.Clear();
 			}
 		}
 
 		// Hurt list update
 		public void WaterListUpdate(Entity Player, bool Add)
 		{
-			Log.Info( "Water list update: " + Player.Name );
+			Log.Info( "Water hurt list update: " + Player.Name );
 			if ( Add )
 				HurtList.Add( Player );
 			else

@@ -6,6 +6,11 @@ namespace Flood
 {
 	partial class FloodPlayer : Player
 	{
+		private DamageInfo lastDamage;
+		public FloodPlayer()
+		{
+			Inventory = new Inventory( this );
+		}
 		public override void Respawn()
 		{
 			SetModel( "models/citizen/citizen.vmdl" );
@@ -24,7 +29,35 @@ namespace Flood
 			EnableHideInFirstPerson = true;
 			EnableShadowInFirstPerson = true;
 
+			Inventory.Add( new PhysGun(), true );
+			Inventory.Add( new GravGun() );
+			Inventory.Add( new Tool() );
+
 			base.Respawn();
+		}
+
+		public override void OnKilled()
+		{
+			base.OnKilled();
+
+			BecomeRagdollOnClient( Velocity, lastDamage.Flags, lastDamage.Position, lastDamage.Force, GetHitboxBone( lastDamage.HitboxIndex ) );
+			Controller = null;
+
+			EnableAllCollisions = false;
+			EnableDrawing = false;
+
+			Inventory.DropActive();
+			Inventory.DeleteContents();
+		}
+
+
+		public override void TakeDamage( DamageInfo info )
+		{
+			//info.Damage = 0;
+
+			lastDamage = info;
+
+			base.TakeDamage( info );
 		}
 
 		/// <summary>
@@ -34,31 +67,16 @@ namespace Flood
 		{
 			base.Simulate( cl );
 
-			//
-			// If you have active children (like a weapon etc) you should call this to 
-			// simulate those too.
-			//
-			SimulateActiveChild( cl, ActiveChild );
-
-			//
-			// If we're running serverside and Attack1 was just pressed, spawn a ragdoll
-			//
-			if ( IsServer && Input.Pressed( InputButton.Attack1 ) )
+			if ( Input.ActiveChild != null )
 			{
-				var ragdoll = new ModelEntity();
-				ragdoll.SetModel( "models/citizen/citizen.vmdl" );  
-				ragdoll.Position = EyePos + EyeRot.Forward * 40;
-				ragdoll.Rotation = Rotation.LookAt( Vector3.Random.Normal );
-				ragdoll.SetupPhysicsFromModel( PhysicsMotionType.Dynamic, false );
-				ragdoll.PhysicsGroup.Velocity = EyeRot.Forward * 1000;
+				ActiveChild = Input.ActiveChild;
 			}
-		}
 
-		public override void OnKilled()
-		{
-			base.OnKilled();
+			if ( LifeState != LifeState.Alive )
+				return;
 
-			EnableDrawing = false;
+			TickPlayerUse();
+			SimulateActiveChild( cl, ActiveChild );
 		}
 	}
 }

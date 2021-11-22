@@ -32,7 +32,8 @@ namespace Flood
 				// and when it is created clientside it creates the actual
 				// UI panels. You don't have to create your HUD via an entity,
 				// this just feels like a nice neat way to do it.
-				new FloodHudEntity();
+				new FloodHud();
+				// Init systems
 				RoundSystem = new FloodRoundSystem();
 				WaterSystem = new FloodWaterSystem();
 			}
